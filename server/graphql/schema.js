@@ -28,6 +28,7 @@ export const typeDefs = `
       
       
       type Mutation {
+        
         createUser(email: String!): Pomodorouser!
 
         createTask(
@@ -57,6 +58,13 @@ export const typeDefs = `
         ): Pomodorotask!        
 
         deleteTask(id: ID): Pomodorotask!
+        
+        deleteUser(id: ID): Pomodorouser!
+        
+        findUser(id: ID): Pomodorouser!
+        
+        findTask(id: ID): Pomodorotask!
+
       }
 
     `;
@@ -75,7 +83,7 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createTask: (root, args, context) => {
+    createTask: (root, args, _) => {
       return prisma.pomodorotask.create({
         data: {
           title: args.title,
@@ -90,10 +98,47 @@ export const resolvers = {
         },
       });
     },
-    createUser: (root, args, context) => {
+
+    createUser: (root, args, _) => {
       return prisma.pomodorouser.create({
         data: {
           email: args.email,
+        },
+      });
+    },
+
+    findUser: (root, args, _) => {
+      const id = +args.id;
+      return prisma.pomodorouser.findFirst({
+        where: {
+          id,
+        },
+      });
+    },
+
+    findTask: (root, args, _) => {
+      const id = +args.id;
+      return prisma.pomodorotask.findFirst({
+        where: {
+          id,
+        },
+      });
+    },
+
+    deleteTask: (root, args, _) => {
+      const id = parseInt(args.id);
+      return prisma.pomodorotask.delete({
+        where: {
+          id,
+        },
+      });
+    },
+
+    deleteUser: (root, args, _) => {
+      const id = parseInt(args.id);
+      return prisma.pomodorouser.delete({
+        where: {
+          id,
         },
       });
     },
