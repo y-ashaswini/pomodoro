@@ -15,12 +15,12 @@ model Pomodorotask {
   description String
   pomodoros_required Int
   pomodoros_completed Int
-  date_started String
+  date_started DateTime @default(now())
   due_date String
   priority Int
   is_complete Boolean
   by_user Pomodorouser @relation(fields: [by_user_id], references: [id])
-  by_user_id Int
+  by_user_id Int @map("pomodorouser")
 }
 
 model Pomodorouser {
