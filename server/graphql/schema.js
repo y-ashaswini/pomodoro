@@ -4,6 +4,9 @@ export const typeDefs = `
       type Query {
         pomodorotasks: [Pomodorotask!]!
         pomodorousers: [Pomodorouser!]!
+                
+        findUser(id: ID): Pomodorouser!
+        findTask(id: ID): Pomodorotask!
       }
 
       type Pomodorotask {
@@ -60,10 +63,6 @@ export const typeDefs = `
         deleteTask(id: ID): Pomodorotask!
         
         deleteUser(id: ID): Pomodorouser!
-        
-        findUser(id: ID): Pomodorouser!
-        
-        findTask(id: ID): Pomodorotask!
 
       }
 
@@ -79,7 +78,35 @@ export const resolvers = {
       });
     },
     pomodorousers: () => {
-      return prisma.pomodorouser.findMany();
+      return prisma.pomodorouser.findMany({
+        include: {
+          tasks: true,
+        },
+      });
+    },
+
+    findUser: (root, args, _) => {
+      const id = +args.id;
+      return prisma.pomodorouser.findFirst({
+        where: {
+          id,
+        },
+        include: {
+          tasks: true,
+        },
+      });
+    },
+
+    findTask: (root, args, _) => {
+      const id = +args.id;
+      return prisma.pomodorotask.findFirst({
+        where: {
+          id,
+        },
+        include: {
+          by_user: true,
+        },
+      });
     },
   },
   Mutation: {
@@ -103,24 +130,6 @@ export const resolvers = {
       return prisma.pomodorouser.create({
         data: {
           email: args.email,
-        },
-      });
-    },
-
-    findUser: (root, args, _) => {
-      const id = +args.id;
-      return prisma.pomodorouser.findFirst({
-        where: {
-          id,
-        },
-      });
-    },
-
-    findTask: (root, args, _) => {
-      const id = +args.id;
-      return prisma.pomodorotask.findFirst({
-        where: {
-          id,
         },
       });
     },
