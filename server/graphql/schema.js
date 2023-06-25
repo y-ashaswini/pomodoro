@@ -35,12 +35,11 @@ export const typeDefs = `
         createUser(email: String!): Pomodorouser!
 
         createTask(
-        id: ID
           title: String!
           description: String!
           pomodoros_required: Int!
           pomodoros_completed: Int!
-          date_started: String
+          date_started: String!
           due_date: String!
           priority: Int!
           is_complete: Boolean!
@@ -85,7 +84,7 @@ export const resolvers = {
       });
     },
 
-    findUser: (root, args, _) => {
+    findUser: (_r, args, _) => {
       const id = +args.id;
       return prisma.pomodorouser.findFirst({
         where: {
@@ -97,7 +96,7 @@ export const resolvers = {
       });
     },
 
-    findTask: (root, args, _) => {
+    findTask: (_r, args, _) => {
       const id = +args.id;
       return prisma.pomodorotask.findFirst({
         where: {
@@ -110,14 +109,14 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createTask: (root, args, _) => {
+    createTask: (_r, args, _) => {
       return prisma.pomodorotask.create({
         data: {
           title: args.title,
-          description: args.title,
+          description: args.description,
           pomodoros_required: args.pomodoros_required,
           pomodoros_completed: args.pomodoros_completed,
-          date_started: new Date().toISOString(),
+          date_started: args.date_started,
           due_date: args.due_date,
           priority: args.priority,
           is_complete: args.is_complete,
@@ -126,7 +125,7 @@ export const resolvers = {
       });
     },
 
-    createUser: (root, args, _) => {
+    createUser: (_r, args, _) => {
       return prisma.pomodorouser.create({
         data: {
           email: args.email,
@@ -134,20 +133,32 @@ export const resolvers = {
       });
     },
 
-    deleteTask: (root, args, _) => {
-      const id = parseInt(args.id);
+    deleteTask: (_r, args, _) => {
       return prisma.pomodorotask.delete({
+        where: {
+          id: parseInt(args.id),
+        },
+      });
+    },
+
+    deleteUser: (_r, args, _) => {
+      const id = parseInt(args.id);
+      return prisma.pomodorouser.delete({
         where: {
           id,
         },
       });
     },
-
-    deleteUser: (root, args, _) => {
+    updateTask: (_r, args, _) => {
       const id = parseInt(args.id);
-      return prisma.pomodorouser.delete({
+      return prisma.pomodorotask.update({
         where: {
           id,
+        },
+        data: {
+          pomodoros_required: args.pomodoros_required,
+          pomodoros_completed: args.pomodoros_completed,
+          is_complete: args.is_complete,
         },
       });
     },

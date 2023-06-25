@@ -1,20 +1,26 @@
 "use client";
-import moment from "moment/moment";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Countdown from "react-countdown";
-import { useQuery } from "@apollo/client";
-import { get_tasks_of_user } from "@/lib/queries";
+import { useQuery, useMutation } from "@apollo/client";
+import {
+  get_tasks_of_user,
+  create_task_for_user,
+  delete_task_by_user,
+  update_task_by_user,
+} from "@/lib/queries";
 
 export default function Home({ params }) {
   const initial_data = {
+    id: "",
     title: "",
     description: "",
     pomodoros_required: "",
-    pomodoros_completed: "",
+    pomodoros_completed: 0,
     date_started: "",
     due_date: "",
     priority: "",
     is_complete: false,
+    by_user_id: "",
   };
 
   const [task, setTask] = useState(initial_data);
@@ -23,19 +29,22 @@ export default function Home({ params }) {
 
   const [timerSelected, setTimerSelected] = useState(false);
   const [timerStartTime, setTimerStartTime] = useState(0);
-  const [currRunningTask, setCurrRunningTask] = useState(-1);
+  const [currRunningTask, setCurrRunningTask] = useState([]);
   const [runBreak, setRunBreak] = useState(false);
 
-  const handleRemove = (index) => {
-    const l = [...stored_data];
-    l.splice(index, 1);
-    setStored_data(l);
+  const handleRemove = (id) => {
+    console.log("deleting task with id: ", id);
+    deleteUserTaskFunction({
+      variables: {
+        taskid: parseInt(id),
+      },
+    });
   };
 
   // Timer functions
 
-  const handleStartTimer = (index) => {
-    setCurrRunningTask(index);
+  const handleStartTimer = (thisTask) => {
+    setCurrRunningTask(thisTask);
     setTimerSelected(true);
     // setTimerStartTime(parseInt(storedTask.pomodoros_required) * 25 * 60 * 1000);
     // setTimerStartTime(25 * 60 * 1000); // 25 minutes, runs as many tomatoes as mentioned.
@@ -53,22 +62,38 @@ export default function Home({ params }) {
         api.start();
       } else {
         // One tomato completed, update task data
-        let f = stored_data[currRunningTask];
-        f.pomodoros_completed++;
-        f.pomodoros_required--;
-        let ff = [...stored_data];
-        ff[currRunningTask] = f;
+
+        const update_pomodoros_completed =
+          currRunningTask.pomodoros_completed + 1;
+        const update_pomodoros_required =
+          currRunningTask.pomodoros_completed - 1;
+
         // Check if task is completed
-        if (f.pomodoros_required <= 0) {
-          f.is_complete = true;
-          setStored_data(ff);
-          setHistory_data([...history_data, stored_data[currRunningTask]]);
-          handleRemove(currRunningTask);
-          setCurrRunningTask(-1);
+        if (update_pomodoros_required <= 0) {
+          console.log("TASK COMPLETED!");
+          updateUserTaskFunction({
+            variables: {
+              taskid: parseInt(currRunningTask.id),
+              pomodoros_completed: update_pomodoros_completed,
+              pomodoros_required: update_pomodoros_required,
+              is_complete: true,
+            },
+          });
+
+          setCurrRunningTask([]);
           setTimerSelected(false);
-        } else if (f.pomodoros_completed == 4) {
+        } else if (update_pomodoros_completed == 4) {
           // 4 tomotoes completed, trigger longer break
-          setStored_data(ff);
+
+          updateUserTaskFunction({
+            variables: {
+              taskid: parseInt(currRunningTask.id),
+              pomodoros_completed: update_pomodoros_completed,
+              pomodoros_required: update_pomodoros_required,
+              is_complete: false,
+            },
+          });
+          setCurrRunningTask(currRunningTask.id);
           setRunBreak(true);
           console.log("break 30 mins");
           // Triggering break for 30 minutes
@@ -77,8 +102,20 @@ export default function Home({ params }) {
           api.start();
         } else {
           // Task incomplete, trigger break
-          setStored_data(ff);
 
+          updateUserTaskFunction({
+            variables: {
+              taskid: parseInt(currRunningTask.id),
+              pomodoros_completed: update_pomodoros_completed,
+              pomodoros_required: update_pomodoros_required,
+              is_complete: false,
+            },
+          });
+          setCurrRunningTask({
+            ...currRunningTask,
+            pomodoros_completed: update_pomodoros_completed,
+            pomodoros_required: update_pomodoros_required,
+          });
           setRunBreak(true);
           console.log("break 5 mins");
           // Triggering break for 5 minutes
@@ -131,40 +168,85 @@ export default function Home({ params }) {
   };
 
   const handleSubmitTask = (curr) => {
-    const today = new Date();
-    curr.date_started = moment(today).format("YYYY-MM-DD");
-    curr.pomodoros_completed = 0;
+    curr.date_started = new Date().toLocaleDateString();
+    curr.by_user_id = parseInt(currUser.id);
     if (curr.pomodoros_required <= 0) curr.pomodoros_required = 1;
-    setStored_data([...stored_data, curr]);
+    try {
+      enterUserTaskFunction({
+        variables: {
+          title: curr.title,
+          description: curr.description,
+          pomodoros_required: curr.pomodoros_required,
+          pomodoros_completed: curr.pomodoros_completed,
+          due_date: curr.due_date,
+          date_started: curr.date_started,
+          priority: curr.priority,
+          is_complete: curr.is_complete,
+          by_user_id: curr.by_user_id,
+        },
+      });
+    } catch (e) {
+      console.error("error: ", e);
+    }
+    // setStored_data([...stored_data, curr]);
     setTask(initial_data);
   };
 
   const [fetchErr, setfetchErr] = useState(false);
-  const { loading, error, data } = useQuery(get_tasks_of_user, {
+  const [currUser, setCurrUser] = useState({ email: "", id: "" });
+
+  // --------------- Defining Functions to Interact with the Data ---------------
+
+  const fetchedUserQuery = useQuery(get_tasks_of_user, {
     variables: {
       param: parseInt(params.id),
     },
   });
 
+  const [enterUserTaskFunction, _e] = useMutation(create_task_for_user, {
+    refetchQueries: [get_tasks_of_user],
+    awaitRefetchQueries: true,
+  });
+
+  const [deleteUserTaskFunction, _d] = useMutation(delete_task_by_user, {
+    refetchQueries: [get_tasks_of_user],
+    awaitRefetchQueries: true,
+  });
+
+  const [updateUserTaskFunction, updateUserTask] = useMutation(
+    update_task_by_user,
+    {
+      refetchQueries: [get_tasks_of_user],
+      awaitRefetchQueries: true,
+    }
+  );
+
   useEffect(() => {
     const onCompleted = (data) => {
-      console.log("data: ", data);
+      // console.log("data: ", data);
       setStored_data(data.findUser.tasks.filter((e) => e.is_complete == false));
       setHistory_data(data.findUser.tasks.filter((e) => e.is_complete == true));
+      const f = {
+        email: data.findUser.email,
+        id: data.findUser.id,
+      };
+      setCurrUser(f);
     };
     const onError = (error) => {
       console.log("fetching error: ", error);
       setfetchErr(true);
     };
-    if (onCompleted && !loading && !error) {
-      onCompleted(data);
-    } else if (onError && !loading && error) {
-      onError(error);
+    if (onCompleted && !fetchedUserQuery.loading && !fetchedUserQuery.error) {
+      onCompleted(fetchedUserQuery.data);
+    } else if (onError && !fetchedUserQuery.loading && fetchedUserQuery.error) {
+      onError(fetchedUserQuery.error);
     }
-  }, [loading, data, error]);
+  }, [fetchedUserQuery.loading, fetchedUserQuery.data, fetchedUserQuery.error]);
 
   return fetchErr ? (
-    <div>Error Fetching</div>
+    <div className="flex flex-col w-full h-[100vh] items-center justify-center bg-zinc-900 text-zinc-200">
+      Error fetching user's tasks
+    </div>
   ) : (
     <div className="grid grid-cols-5 w-full bg-zinc-900 text-zinc-200">
       <div className="flex-col h-[100vh] overflow-y-scroll scrollbar-thumb-zinc-700 scrollbar-thumb-rounded-2xl scrollbar-track-zinc-900 scrollbar-thin space-y-4 p-16 col-span-3">
@@ -178,14 +260,14 @@ export default function Home({ params }) {
               ) : (
                 <div
                   className="border-[1px] border-zinc-500 hover:border-zinc-200 duration-200 ease-in w-fit px-8 py-4 rounded-full hover:text-zinc-200 cursor-pointer absolute right-2 top-2 text-3xl"
-                  onClick={() => handleStartTimer(index)}
+                  onClick={() => handleStartTimer(storedTask)}
                 >
                   SET TIMER
                 </div>
               )}
               <div
                 className="border-[1px] border-zinc-500 hover:border-zinc-200 duration-200 ease-in w-fit px-2 py-1 rounded-sm hover:text-zinc-200 cursor-pointer absolute bottom-2 right-2"
-                onClick={(index) => handleRemove(index)}
+                onClick={() => handleRemove(storedTask.id)}
               >
                 DELETE
               </div>
@@ -244,7 +326,7 @@ export default function Home({ params }) {
             className="border-b-[1px] px-2 py-1 outline-none bg-transparent border-zinc-500 text-zinc-200"
             value={task.pomodoros_required}
             onChange={(e) =>
-              setTask({ ...task, pomodoros_required: e.target.value })
+              setTask({ ...task, pomodoros_required: parseInt(e.target.value) })
             }
           />
           <input
@@ -334,16 +416,13 @@ export default function Home({ params }) {
       <div className="flex items-center flex-col col-start-4 col-span-2 border-l-[1px] border-zinc-700 space-y-4 p-16">
         {timerSelected ? (
           <>
-            {currRunningTask !== -1 && stored_data[currRunningTask] && (
+            {currRunningTask !== [] && (
               <div className="flex flex-col gap-2 border-b-[1px] border-zinc-500 pb-4 mb-4 w-full items-center">
-                <span className="text-4xl">
-                  {stored_data[currRunningTask].title}
-                </span>
-                <span>{stored_data[currRunningTask].description}</span>
-                <span>{stored_data[currRunningTask].date_started}</span>
+                <span className="text-4xl">{currRunningTask.title}</span>
+                <span>{currRunningTask.description}</span>
+                <span>{currRunningTask.date_started}</span>
                 <span>
-                  {stored_data[currRunningTask].pomodoros_required} tomatoes
-                  remaining!
+                  {currRunningTask.pomodoros_required} tomatoes remaining!
                 </span>
               </div>
             )}
@@ -357,9 +436,14 @@ export default function Home({ params }) {
             />
           </>
         ) : (
-          <span className="text-zinc-500 text-4xl hover:text-zinc-200 duration-200 ease-in">
-            No timer selected.
-          </span>
+          <>
+            <span className="text-xs self-start text-zinc-300">
+              {currUser.email}
+            </span>
+            <span className="text-zinc-500 text-4xl gap-4 hover:text-zinc-200 duration-200 ease-in">
+              No timer selected.
+            </span>
+          </>
         )}
       </div>
     </div>

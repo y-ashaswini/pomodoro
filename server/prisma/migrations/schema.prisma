@@ -15,7 +15,7 @@ model Pomodorotask {
   description String
   pomodoros_required Int
   pomodoros_completed Int
-  date_started DateTime @default(now())
+  date_started String
   due_date String
   priority Int
   is_complete Boolean
