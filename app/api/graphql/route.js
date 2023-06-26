@@ -8,7 +8,6 @@ const { handleRequest } = createYoga({
   }),
 
   graphqlEndpoint: "/api/graphql",
-
   fetchAPI: { Response },
 });
 

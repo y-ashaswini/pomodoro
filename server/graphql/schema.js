@@ -2,11 +2,13 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 export const typeDefs = `
       type Query {
-        pomodorotasks: [Pomodorotask!]!
-        pomodorousers: [Pomodorouser!]!
+        pomodorotasks: [Pomodorotask]
+        pomodorousers: [Pomodorouser]
                 
-        findUser(id: ID): Pomodorouser!
-        findTask(id: ID): Pomodorotask!
+        findUserID(id: ID): Pomodorouser
+        findUserUsername(username: String): Pomodorouser
+        findUserEmail(email: String): Pomodorouser
+        findTask(id: ID): Pomodorotask
       }
 
       type Pomodorotask {
@@ -26,13 +28,19 @@ export const typeDefs = `
       type Pomodorouser {
         id: ID
         email: String!
+        username: String!
+        password: String!
         tasks: [Pomodorotask]
       }     
       
       
       type Mutation {
         
-        createUser(email: String!): Pomodorouser!
+        createUser(
+          email: String!
+          username: String!
+          password: String!
+        ): Pomodorouser
 
         createTask(
           title: String!
@@ -44,7 +52,7 @@ export const typeDefs = `
           priority: Int!
           is_complete: Boolean!
           by_user_id: Int!
-        ): Pomodorotask!
+        ): Pomodorotask
 
         updateTask(
           id: ID
@@ -57,11 +65,18 @@ export const typeDefs = `
           priority: Int
           is_complete: Boolean
           by_user_id: Int
-        ): Pomodorotask!        
+        ): Pomodorotask  
 
-        deleteTask(id: ID): Pomodorotask!
+        updateUser(
+          id: ID
+          email: String
+          username: String
+          password: String
+        ): Pomodorouser
+
+        deleteTask(id: ID): Pomodorotask
         
-        deleteUser(id: ID): Pomodorouser!
+        deleteUser(id: ID): Pomodorouser
 
       }
 
@@ -84,11 +99,33 @@ export const resolvers = {
       });
     },
 
-    findUser: (_r, args, _) => {
+    findUserID: (_r, args, _) => {
       const id = +args.id;
       return prisma.pomodorouser.findFirst({
         where: {
           id,
+        },
+        include: {
+          tasks: true,
+        },
+      });
+    },
+
+    findUserUsername: (_r, args, _) => {
+      return prisma.pomodorouser.findFirst({
+        where: {
+          username: args.username,
+        },
+        include: {
+          tasks: true,
+        },
+      });
+    },
+
+    findUserEmail: (_r, args, _) => {
+      return prisma.pomodorouser.findFirst({
+        where: {
+          email: args.email,
         },
         include: {
           tasks: true,
@@ -129,6 +166,8 @@ export const resolvers = {
       return prisma.pomodorouser.create({
         data: {
           email: args.email,
+          username: args.username,
+          password: args.password,
         },
       });
     },
@@ -159,6 +198,17 @@ export const resolvers = {
           pomodoros_required: args.pomodoros_required,
           pomodoros_completed: args.pomodoros_completed,
           is_complete: args.is_complete,
+        },
+      });
+    },
+    updateUser: (_r, args, _) => {
+      const id = parseInt(args.id);
+      return prisma.pomodorouser.update({
+        where: {
+          id,
+        },
+        data: {
+          username: args.username,
         },
       });
     },

@@ -1,15 +1,18 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Countdown from "react-countdown";
+import { useSession } from "next-auth/react";
 import { useQuery, useMutation } from "@apollo/client";
 import {
-  get_tasks_of_user,
   create_task_for_user,
   delete_task_by_user,
   update_task_by_user,
+  get_tasks_of_email,
 } from "@/lib/queries";
+import { retrieveSession } from "@/lib/usersession";
 
 export default function Home({ params }) {
+  // console.log("email: ", decodeURIComponent(params.email));
   const initial_data = {
     id: "",
     title: "",
@@ -23,6 +26,7 @@ export default function Home({ params }) {
     by_user_id: "",
   };
 
+  const [currUser, setCurrUser] = useState("");
   const [task, setTask] = useState(initial_data);
   const [stored_data, setStored_data] = useState([]);
   const [history_data, setHistory_data] = useState([]);
@@ -56,7 +60,7 @@ export default function Home({ params }) {
       api.stop();
       // Check if break was running
       if (runBreak) {
-        console.log("break was running");
+        // console.log("break was running");
         setRunBreak(false);
         setTimerStartTime(10 * 1000); // Start task again
         api.start();
@@ -66,10 +70,10 @@ export default function Home({ params }) {
         const update_pomodoros_completed =
           currRunningTask.pomodoros_completed + 1;
         const update_pomodoros_required =
-          currRunningTask.pomodoros_completed - 1;
+          currRunningTask.pomodoros_required - 1;
 
         // Check if task is completed
-        if (update_pomodoros_required <= 0) {
+        if (update_pomodoros_required < 1) {
           console.log("TASK COMPLETED!");
           updateUserTaskFunction({
             variables: {
@@ -82,7 +86,7 @@ export default function Home({ params }) {
 
           setCurrRunningTask([]);
           setTimerSelected(false);
-        } else if (update_pomodoros_completed == 4) {
+        } else if (update_pomodoros_completed >= 4) {
           // 4 tomotoes completed, trigger longer break
 
           updateUserTaskFunction({
@@ -93,9 +97,13 @@ export default function Home({ params }) {
               is_complete: false,
             },
           });
-          setCurrRunningTask(currRunningTask.id);
+          setCurrRunningTask({
+            ...currRunningTask,
+            pomodoros_completed: update_pomodoros_completed,
+            pomodoros_required: update_pomodoros_required,
+          });
           setRunBreak(true);
-          console.log("break 30 mins");
+          // console.log("break 30 mins");
           // Triggering break for 30 minutes
           // setTimerStartTime(30 * 60 * 1000);
           setTimerStartTime(7 * 1000); // testing - break for 7 seconds
@@ -193,30 +201,29 @@ export default function Home({ params }) {
   };
 
   const [fetchErr, setfetchErr] = useState(false);
-  const [currUser, setCurrUser] = useState({ email: "", id: "" });
 
   // --------------- Defining Functions to Interact with the Data ---------------
 
-  const fetchedUserQuery = useQuery(get_tasks_of_user, {
+  const fetchedUserQuery = useQuery(get_tasks_of_email, {
     variables: {
-      param: parseInt(params.id),
+      param: decodeURIComponent(params.email),
     },
   });
 
   const [enterUserTaskFunction, _e] = useMutation(create_task_for_user, {
-    refetchQueries: [get_tasks_of_user],
+    refetchQueries: [get_tasks_of_email],
     awaitRefetchQueries: true,
   });
 
   const [deleteUserTaskFunction, _d] = useMutation(delete_task_by_user, {
-    refetchQueries: [get_tasks_of_user],
+    refetchQueries: [get_tasks_of_email],
     awaitRefetchQueries: true,
   });
 
   const [updateUserTaskFunction, updateUserTask] = useMutation(
     update_task_by_user,
     {
-      refetchQueries: [get_tasks_of_user],
+      refetchQueries: [get_tasks_of_email],
       awaitRefetchQueries: true,
     }
   );
@@ -224,13 +231,16 @@ export default function Home({ params }) {
   useEffect(() => {
     const onCompleted = (data) => {
       // console.log("data: ", data);
-      setStored_data(data.findUser.tasks.filter((e) => e.is_complete == false));
-      setHistory_data(data.findUser.tasks.filter((e) => e.is_complete == true));
-      const f = {
-        email: data.findUser.email,
-        id: data.findUser.id,
-      };
-      setCurrUser(f);
+
+      setStored_data(
+        data?.findUserEmail?.tasks?.filter((e) => e.is_complete == false)
+      );
+
+      setHistory_data(
+        data?.findUserEmail?.tasks?.filter((e) => e.is_complete == true)
+      );
+
+      // setCurrUser(f);
     };
     const onError = (error) => {
       console.log("fetching error: ", error);
@@ -438,7 +448,7 @@ export default function Home({ params }) {
         ) : (
           <>
             <span className="text-xs self-start text-zinc-300">
-              {currUser.email}
+              {currUser?.email}
             </span>
             <span className="text-zinc-500 text-4xl gap-4 hover:text-zinc-200 duration-200 ease-in">
               No timer selected.

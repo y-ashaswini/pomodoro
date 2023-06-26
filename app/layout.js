@@ -2,6 +2,9 @@
 import "./globals.css";
 import { Nunito } from "next/font/google";
 import { ApolloProvider } from "@apollo/client";
+import { SessionProvider } from "next-auth/react";
+import HeaderPage from "./header";
+
 import client from "@/lib/apollo";
 
 const nunito = Nunito({ subsets: ["latin"] });
@@ -15,9 +18,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={nunito.className}>
-        <ApolloProvider client={client}>
-          <main>{children}</main>
-        </ApolloProvider>
+        <SessionProvider>
+          <ApolloProvider client={client}>
+            <HeaderPage/>
+            <main>{children}</main>
+          </ApolloProvider>
+        </SessionProvider>
       </body>
     </html>
   );
