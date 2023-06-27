@@ -31,11 +31,7 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 // }
 
 export default async function SignIn(context) {
-  const session = await getServerSession(
-    context?.req,
-    context?.res,
-    authOptions
-  );
+  const session = await getServerSession(context.req, context.res, authOptions);
 
   if (session) {
     return { redirect: { destination: "/" } };
@@ -50,9 +46,9 @@ const DoSomething = ({ providers }) => {
   return (
     <>
       {Object.values(providers).map((provider) => (
-        <div key={provider.name}>
-          <button onClick={() => signIn(provider.id)}>
-            Sign in with {provider.name}
+        <div key={provider?.name}>
+          <button onClick={() => signIn(provider?.id)}>
+            Sign in with {provider?.name}
           </button>
         </div>
       ))}
