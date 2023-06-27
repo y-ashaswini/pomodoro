@@ -1,5 +1,6 @@
 "use client";
 import { get_tasks_of_email } from "@/lib/queries";
+// import { disconnectPrisma } from "@/server/graphql/schema";
 import { useQuery } from "@apollo/client";
 
 import {
@@ -28,10 +29,10 @@ const light = "#FF8360";
 const medium = "#D5D5D5";
 const dark = "#363636";
 
-export default function fetchData() {
+export default function fetchData({params}) {
   const { loading, error, data } = useQuery(get_tasks_of_email, {
     variables: {
-      param: "yashaswinishivathaya@gmail.com",
+      param: decodeURIComponent(params.email),
     },
   });
 
@@ -44,6 +45,7 @@ export default function fetchData() {
   }
   if (error) {
     console.error(error);
+    // await disconnectPrisma();
     return (
       <div className="flex flex-col w-full h-[100vh] items-center justify-center bg-latte text-jet">
         Error fetching user's tasks
@@ -52,16 +54,16 @@ export default function fetchData() {
   }
 
   const f = data?.findUserEmail?.tasks?.filter((e) => e.is_complete == true);
-
+  // await disconnectPrisma();
   return (
     <div className="pt-32 bg-latte text-jet grid grid-cols-2 gap-4 p-8">
       <span className="grid col-span-1 gap-4">
-        <span className="text-3xl font-bold text-coral mx-auto">
+        <span className="text-3xl font-bold text-coral h-fit w-fit mx-auto">
           HISTORY OF ALL YOUR TASKS
         </span>
         <PastTasks props={f} />
       </span>
-      <span className="grid col-span-1 flex-cols">
+      <span className="grid col-span-1">
         <BarGraph1 props={f} />
         <BarGraph2 props={f} />
         <DonutGraph props={f} />
@@ -87,7 +89,7 @@ function PastTasks({ props }) {
       {props &&
         props.map((storedTask, index) => (
           <div
-            className="md:border-2 border-2 border-jet rounded-3xl text-jet p-4 flex flex-col gap-2 relative w-5/6 mx-auto sm:text-md text-xs "
+            className="md:border-2 border-2 border-jet rounded-3xl text-jet p-4 flex flex-col gap-2 relative w-5/6 mx-auto sm:text-md text-xs h-fit"
             key={index}
           >
             <div className="bg-jet text-latte duration-200 ease-in w-fit px-4 py-2 rounded-full absolute md:right-8 right-4 md:bottom-8 bottom-4">
@@ -134,9 +136,14 @@ function PastTasks({ props }) {
 function DonutGraph({ props }) {
   let priority_data_points = [0, 0, 0];
   const priority_label = ["High", "Medium", "Low"];
-  const priority_color = [light, medium, dark];
+  const priority_color = [];
 
-  props.map((e) => priority_data_points[parseInt(e.priority) - 1]++);
+  props.map((e) => {
+    priority_data_points[parseInt(e.priority) - 1]++;
+    if (e.priority == 1) priority_color.push(dark);
+    if (e.priority == 2) priority_color.push(medium);
+    if (e.priority == 3) priority_color.push(light);
+  });
   const priority_data = {
     label: priority_label,
     datasets: [
@@ -230,7 +237,6 @@ function BarGraph2({ props }) {
     }
   });
   // console.log(pomodoros_used);
-
   const pomodoros_data = {
     labels: title,
     datasets: [

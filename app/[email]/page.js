@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+
 import Countdown from "react-countdown";
 import { useQuery, useMutation } from "@apollo/client";
 import {
@@ -7,9 +9,11 @@ import {
   delete_task_by_user,
   update_task_by_user,
   get_tasks_of_email,
+  create_new_user,
 } from "@/lib/queries";
 
 export default function Home({ params }) {
+  const { data: s, _ } = useSession();
   const initial_data = {
     id: "",
     title: "",
@@ -33,8 +37,20 @@ export default function Home({ params }) {
   const [currRunningTask, setCurrRunningTask] = useState([]);
   const [runBreak, setRunBreak] = useState(false);
 
+  function compare_due_date(a, b) {
+    if (Date.parse(a.due_date) > Date.parse(b.due_date)) return 1;
+    if (Date.parse(a.due_date) > Date.parse(b.due_date)) return -1;
+    return 0;
+  }
+
+  function compare_priority(a, b) {
+    if (a.priority > b.priority) return 1;
+    if (a.priority < b.priority) return -1;
+    return 0;
+  }
+
   const handleRemove = (id) => {
-    console.log("deleting task with id: ", id);
+    // console.log("deleting task with id: ", id);
     deleteUserTaskFunction({
       variables: {
         taskid: parseInt(id),
@@ -43,7 +59,7 @@ export default function Home({ params }) {
   };
 
   const handleMarkCompleted = () => {
-    console.log("TASK COMPLETED!");
+    // console.log("TASK COMPLETED!");
     updateUserTaskFunction({
       variables: {
         taskid: parseInt(currRunningTask.id),
@@ -85,7 +101,7 @@ export default function Home({ params }) {
 
         // Check if task is completed
         if (update_pomodoros_required < 1) {
-          console.log("TASK COMPLETED!");
+          // console.log("TASK COMPLETED!");
           updateUserTaskFunction({
             variables: {
               taskid: parseInt(currRunningTask.id),
@@ -136,7 +152,6 @@ export default function Home({ params }) {
             pomodoros_required: update_pomodoros_required,
           });
           setRunBreak(true);
-          console.log("break 5 mins");
           // Triggering break for 5 minutes
           setTimerStartTime(5 * 60 * 1000);
           // setTimerStartTime(5 * 1000); // testing - break for 5 seconds
@@ -160,7 +175,7 @@ export default function Home({ params }) {
               {seconds <= 9 ? "0" + seconds : seconds}
             </span>
           </span>
-          <span className="flex gap-2 items-center flex-wrap justify-center font-bold">
+          <span className="flex gap-2 items-center flex-wrap justify-center text-sm font-bold">
             <span
               className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer"
               onClick={function () {
@@ -248,17 +263,32 @@ export default function Home({ params }) {
     awaitRefetchQueries: true,
   });
 
-  const [updateUserTaskFunction, updateUserTask] = useMutation(
-    update_task_by_user,
-    {
-      refetchQueries: [get_tasks_of_email],
-      awaitRefetchQueries: true,
-    }
-  );
+  const [createUserFunction, _c] = useMutation(create_new_user);
+
+  const [updateUserTaskFunction, _u] = useMutation(update_task_by_user, {
+    refetchQueries: [get_tasks_of_email],
+    awaitRefetchQueries: true,
+  });
 
   useEffect(() => {
     const onCompleted = (data) => {
       // console.log("data: ", data);
+      // console.log("user session: ", s);
+
+      // if no data returned, the user isn't stored in database
+      if (data.findUserEmail === null) {
+        try {
+          createUserFunction({
+            variables: {
+              username: s.user.name,
+              email: s.user.email,
+              password: s.user.id,
+            },
+          });
+        } catch (e) {
+          console.log("error creating new user: ", e);
+        }
+      }
 
       setStored_data(
         data?.findUserEmail?.tasks?.filter((e) => e.is_complete == false)
@@ -409,118 +439,140 @@ export default function Home({ params }) {
         <div className="grid md:grid-cols-2 flex-col md:gap-8 p-8 gap-4 w-full font-bold">
           <span className="flex flex-col gap-4">
             <span className="md:text-5xl text-3xl">PENDING TASKS</span>
-            {stored_data ? (
-              stored_data.map((storedTask, index) => (
-                <div
-                  className="bg-coral sm:text-md text-xs rounded-3xl text-jet md:p-8 p-4 flex flex-col gap-2 relative"
-                  key={index}
-                >
-                  <div
-                    className="bg-jet text-latte duration-200 ease-in w-fit px-4 py-2 rounded-full cursor-pointer absolute md:right-8 right-4 md:top-8 top-4"
-                    onClick={() => handleStartTimer(storedTask)}
-                  >
-                    SET TIMER
-                  </div>
 
+            {!stored_data || (stored_data && stored_data.length !== 0) ? (
+              <>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                    SORT | DUE DATE
+                  </span>
+                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                    SORT | PRIORITY
+                  </span>
+                </span>
+                {stored_data.map((storedTask, index) => (
                   <div
-                    className="bg-jet text-latte duration-200 ease-in w-fit px-4 py-2 rounded-full cursor-pointer absolute md:right-8 right-4 md:bottom-8 bottom-4"
-                    onClick={() => handleRemove(storedTask.id)}
+                    className="bg-coral sm:text-md text-xs rounded-3xl text-jet md:p-8 p-4 flex flex-col gap-2 relative"
+                    key={index}
                   >
-                    DELETE
-                  </div>
+                    <div
+                      className="bg-jet text-latte duration-200 ease-in w-fit px-4 py-2 rounded-full cursor-pointer absolute md:right-8 right-4 md:top-8 top-4"
+                      onClick={() => handleStartTimer(storedTask)}
+                    >
+                      SET TIMER
+                    </div>
 
-                  <span className="border-2 border-latte text-latte px-4 py-2 w-fit rounded-3xl ">
-                    TASK {index + 1}
-                  </span>
-                  <span className="flex gap-4 flex-wrap items-center">
-                    <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
-                      TITLE
+                    <div
+                      className="bg-jet text-latte duration-200 ease-in w-fit px-4 py-2 rounded-full cursor-pointer absolute md:right-8 right-4 md:bottom-8 bottom-4"
+                      onClick={() => handleRemove(storedTask.id)}
+                    >
+                      DELETE
+                    </div>
+
+                    <span className="border-2 border-latte text-latte px-4 py-2 w-fit rounded-3xl ">
+                      TASK {index + 1}
                     </span>
-                    <span className="text-xl">{storedTask.title}</span>
-                  </span>
-                  <span className="flex gap-4 flex-wrap items-center">
-                    <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
-                      DESCRIPTION
+                    <span className="flex gap-4 flex-wrap items-center">
+                      <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
+                        TITLE
+                      </span>
+                      <span className="text-xl">{storedTask.title}</span>
                     </span>
-                    <span className="text-xl">{storedTask.description}</span>
-                  </span>
-                  <span className="flex gap-4 flex-wrap items-center">
-                    <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
-                      POMODOROS REQUIRED
+                    <span className="flex gap-4 flex-wrap items-center">
+                      <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
+                        DESCRIPTION
+                      </span>
+                      <span className="text-xl">{storedTask.description}</span>
                     </span>
-                    <span className="text-xl">
-                      {storedTask.pomodoros_required}
+                    <span className="flex gap-4 flex-wrap items-center">
+                      <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
+                        POMODOROS REQUIRED
+                      </span>
+                      <span className="text-xl">
+                        {storedTask.pomodoros_required}
+                      </span>
                     </span>
-                  </span>
-                  <span className="flex gap-4 flex-wrap items-center">
-                    <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
-                      DATE ADDED
+                    <span className="flex gap-4 flex-wrap items-center">
+                      <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
+                        DATE ADDED
+                      </span>
+                      <span className="text-xl">{storedTask.date_started}</span>
                     </span>
-                    <span className="text-xl">{storedTask.date_started}</span>
-                  </span>
-                  <span className="flex gap-4 flex-wrap items-center">
-                    <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
-                      DUE DATE
+                    <span className="flex gap-4 flex-wrap items-center">
+                      <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
+                        DUE DATE
+                      </span>
+                      <span className="text-xl">{storedTask.due_date}</span>
                     </span>
-                    <span className="text-xl">{storedTask.due_date}</span>
-                  </span>
-                  <span className="flex gap-4 flex-wrap items-center">
-                    <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
-                      PRIORITY
+                    <span className="flex gap-4 flex-wrap items-center">
+                      <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
+                        PRIORITY
+                      </span>
+                      <span className="text-xl">{storedTask.priority}</span>
                     </span>
-                    <span className="text-xl">{storedTask.priority}</span>
-                  </span>
-                </div>
-              ))
+                  </div>
+                ))}
+              </>
             ) : (
               <span>Good Job! You've got no pending tasks.</span>
             )}
           </span>
           <span className="flex flex-col gap-4">
             <span className="md:text-5xl text-3xl">COMPLETED TASKS</span>
-            {history_data ? (
-              history_data.map((storedTask, index) => (
-                <div
-                  className="md:border-2 border-2 border-jet rounded-3xl text-jet md:p-8 p-4 flex flex-col gap-2 relative sm:text-md text-xs "
-                  key={index}
-                >
-                  <div className="bg-jet text-latte duration-200 ease-in w-fit px-4 py-2 rounded-full absolute md:right-8 right-4 md:bottom-8 bottom-4">
-                    COMPLETED
+
+            {!history_data || (history_data && history_data.length !== 0) ? (
+              <>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                    SORT | DUE DATE
+                  </span>
+                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                    SORT | PRIORITY
+                  </span>
+                </span>
+                {history_data.map((storedTask, index) => (
+                  <div
+                    className="md:border-2 border-2 border-jet rounded-3xl text-jet md:p-8 p-4 flex flex-col gap-2 relative sm:text-md text-xs "
+                    key={index}
+                  >
+                    <div className="bg-jet text-latte duration-200 ease-in w-fit px-4 py-2 rounded-full absolute md:right-8 right-4 md:bottom-8 bottom-4">
+                      COMPLETED
+                    </div>
+                    <span className="flex md:gap-4 gap-2 flex-wrap items-center">
+                      <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
+                        TITLE
+                      </span>
+                      <span className="text-xl">{storedTask.title}</span>
+                    </span>
+
+                    <span className="flex  md:gap-4 gap-2 flex-wrap items-center">
+                      <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
+                        DESCRIPTION
+                      </span>
+                      <span className="text-xl">{storedTask.description}</span>
+                    </span>
+
+                    <span className="flex md:gap-4 gap-2 flex-wrap items-center">
+                      <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
+                        DATE ADDED
+                      </span>
+                      <span className="text-xl">{storedTask.date_started}</span>
+                    </span>
+                    <span className="flex md:gap-4 gap-2 flex-wrap items-center">
+                      <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
+                        DUE DATE
+                      </span>
+                      <span className="text-xl">{storedTask.due_date}</span>
+                    </span>
+                    <span className="flex md:gap-4 gap-2 flex-wrap items-center">
+                      <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
+                        PRIORITY
+                      </span>
+                      <span className="text-xl">{storedTask.priority}</span>
+                    </span>
                   </div>
-                  <span className="flex md:gap-4 gap-2 flex-wrap items-center">
-                    <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
-                      TITLE
-                    </span>
-                    <span className="text-xl">{storedTask.title}</span>
-                  </span>
-
-                  <span className="flex  md:gap-4 gap-2 flex-wrap items-center">
-                    <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
-                      DESCRIPTION
-                    </span>
-                    <span className="text-xl">{storedTask.description}</span>
-                  </span>
-
-                  <span className="flex md:gap-4 gap-2 flex-wrap items-center">
-                    <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
-                      DATE ADDED
-                    </span>
-                    <span className="text-xl">{storedTask.date_started}</span>
-                  </span>
-                  <span className="flex md:gap-4 gap-2 flex-wrap items-center">
-                    <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
-                      DUE DATE
-                    </span>
-                    <span className="text-xl">{storedTask.due_date}</span>
-                  </span>
-                  <span className="flex md:gap-4 gap-2 flex-wrap items-center">
-                    <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
-                      PRIORITY
-                    </span>
-                    <span className="text-xl">{storedTask.priority}</span>
-                  </span>
-                </div>
-              ))
+                ))}
+              </>
             ) : (
               <span>No completed tasks yet!</span>
             )}
