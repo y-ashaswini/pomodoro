@@ -12,7 +12,7 @@ export default async function SignIn(context) {
     );
 
     if (session) {
-      return { redirect: { destination: "/profile" } };
+      return { redirect: { destination: "/" } };
     }
 
     const providers = await getProviders();
@@ -27,7 +27,13 @@ const DoSomething = ({ providers }) => {
     <>
       {Object.values(providers).map((provider) => (
         <div key={provider?.name}>
-          <button onClick={() => signIn(provider?.id)}>
+          <button
+            onClick={() =>
+              signIn(provider?.id, {
+                redirect_uri: `https://taskpomodoros.vercel.app/api/auth/callback/google`,
+              })
+            }
+          >
             Sign in / Sign up with {provider?.name}
           </button>
         </div>
@@ -35,3 +41,8 @@ const DoSomething = ({ providers }) => {
     </>
   );
 };
+
+// provider.callbackUrl =
+//   provider.callbackUrl +
+//   `?callbackUrl=` +
+//   encodeURIComponent(req.options.callbackUrl);
