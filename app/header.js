@@ -1,28 +1,64 @@
-import { retrieveSession } from "@/lib/usersession";
+"use client";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
 
 export default function HeaderPage() {
-  const s = retrieveSession();
+  const [show, setShow] = useState(false);
+  const { data: s, _ } = useSession();
   return (
-    <div className="bg-zinc-900 h-[10vh] text-zinc-500 hover:text-zinc-200 duration-200 ease-in flex justify-between md:px-8 p-4">
-      <span className="text-4xl">Pomodoro</span>
+    <div className="bg-transparent sm:bg-latte fixed z-50 w-full sm:h-[10vh] text-jet flex justify-between items-start sm:items-center md:px-8 p-4">
+      {s?.user?.email ? (
+        <a
+          href={`/${s.user.email}`}
+          className="xs:text-4xl text-2xl hover:bg-coral hover:bg-opacity-25 ease-in duration-200 px-4 py-2 rounded-full"
+        >
+          Pomodoro
+        </a>
+      ) : (
+        <a
+          href="/"
+          className="xs:text-4xl text-2xl hover:bg-coral hover:bg-opacity-25 ease-in duration-200 px-4 py-2 rounded-full"
+        >
+          Pomodoro
+        </a>
+      )}
       {s?.user ? (
-        <span className="flex justify-center gap-2">
-          <span className="border-[1px] border-zinc-500 px-4 py-2 rounded-full">
-            {s.user.name}
-          </span>
-          <span className="border-[1px] border-zinc-500 px-4 py-2 rounded-full">
-            {s.user.email}
-          </span>
+        <span className="flex sm:flex-row flex-col sm:justify-center justify-start sm:text-base text-xs items-center gap-2">
           <img
             src={s.user.picture}
             height="40"
             width="40"
             className="rounded-full"
+            onClick={() => setShow((curr) => !curr)}
           />
+          <span
+            className={
+              "border-2 border-jet text-jet font-bold px-4 py-2 rounded-full" +
+              (show ? "" : " hidden sm:inline")
+            }
+          >
+            {s.user.name}
+          </span>
+          {s?.user?.email ? (
+            <a
+              href={`/${s.user.email}/profile`}
+              className={
+                "bg-jet text-latte px-4 py-2 font-bold rounded-full" +
+                (show ? "" : " hidden sm:inline")
+              }
+            >
+              PROFILE
+            </a>
+          ) : (
+            <></>
+          )}
 
           <a
             href="/api/auth/signout"
-            className="border-[1px] bg-zinc-200 text-zinc-900 px-4 py-2 rounded-full"
+            className={
+              "bg-jet text-latte font-bold px-4 py-2 rounded-full" +
+              (show ? "" : " hidden sm:inline")
+            }
           >
             SIGNOUT
           </a>

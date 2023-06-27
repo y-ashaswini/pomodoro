@@ -17,10 +17,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={nunito.className}>
+      <body className={nunito.className+" overflow-y-scroll scrollbar-thumb-zinc-700 scrollbar-thumb-rounded-2xl scrollbar-track-latte scrollbar-thin"}>
         <SessionProvider>
           <ApolloProvider client={client}>
-            <HeaderPage/>
+            <HeaderPage />
             <main>{children}</main>
           </ApolloProvider>
         </SessionProvider>
