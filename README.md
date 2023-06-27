@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Hosted Link
 
-[https://taskpomodoros.vercel.app/](Pomodoros App)
+[Pomodoro Task App](https://taskpomodoros.vercel.app/)
 
 ## Getting Started
 
