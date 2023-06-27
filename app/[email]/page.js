@@ -44,9 +44,31 @@ export default function Home({ params }) {
   }
 
   function compare_priority(a, b) {
-    if (a.priority > b.priority) return 1;
-    if (a.priority < b.priority) return -1;
+    if (a.priority < b.priority) return 1;
+    if (a.priority > b.priority) return -1;
     return 0;
+  }
+
+  function sortStoredDate() {
+    console.log("Earlier: ", stored_data);
+    const f = stored_data.sort(compare_due_date);
+    console.log("Now: ", f);
+    setStored_data(f);
+  }
+  function sortStoredPriority() {
+    console.log("Earlier: ", stored_data);
+    const f = stored_data.sort(compare_priority);
+    console.log("Now: ", f);
+    setStored_data(f);
+  }
+
+  function sortHistoryDate() {
+    const f = stored_data.sort(compare_due_date);
+    setStored_data(f);
+  }
+  function sortHistoryPriority() {
+    const f = stored_data.sort(compare_priority);
+    setStored_data(f);
   }
 
   const handleRemove = (id) => {
@@ -443,10 +465,16 @@ export default function Home({ params }) {
             {!stored_data || (stored_data && stored_data.length !== 0) ? (
               <>
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                  <span
+                    className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer"
+                    onClick={() => sortStoredDate()}
+                  >
                     SORT | DUE DATE
                   </span>
-                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                  <span
+                    className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer"
+                    onClick={() => sortStoredPriority()}
+                  >
                     SORT | PRIORITY
                   </span>
                 </span>
@@ -508,7 +536,13 @@ export default function Home({ params }) {
                       <span className="bg-latte px-4 py-2 w-fit rounded-3xl ">
                         PRIORITY
                       </span>
-                      <span className="text-xl">{storedTask.priority}</span>
+                      <span className="text-xl">
+                        {storedTask.priority === 1
+                          ? "LOW"
+                          : storedTask.priority === 2
+                          ? "MEDIUM"
+                          : "HIGH"}
+                      </span>
                     </span>
                   </div>
                 ))}
@@ -523,10 +557,16 @@ export default function Home({ params }) {
             {!history_data || (history_data && history_data.length !== 0) ? (
               <>
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                  <span
+                    className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer"
+                    onClick={() => sortHistoryDate()}
+                  >
                     SORT | DUE DATE
                   </span>
-                  <span className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer">
+                  <span
+                    className="border-2 border-jet hover:bg-jet hover:text-latte duration-200 ease-in w-fit md:px-4 px-2 md:py-2 py-1 md:rounded-full rounded-md cursor-pointer"
+                    onClick={() => sortHistoryPriority()}
+                  >
                     SORT | PRIORITY
                   </span>
                 </span>
@@ -568,7 +608,13 @@ export default function Home({ params }) {
                       <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
                         PRIORITY
                       </span>
-                      <span className="text-xl">{storedTask.priority}</span>
+                      <span className="text-xl">
+                        {storedTask.priority === 1
+                          ? "LOW"
+                          : storedTask.priority === 2
+                          ? "MEDIUM"
+                          : "HIGH"}
+                      </span>
                     </span>
                   </div>
                 ))}

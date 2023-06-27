@@ -25,11 +25,11 @@ ChartJS.register(
   Legend
 );
 
-const light = "#FF8360";
-const medium = "#D5D5D5";
+const light = "#D5D5D5";
+const medium = "#FF8360";
 const dark = "#363636";
 
-export default function fetchData({params}) {
+export default function fetchData({ params }) {
   const { loading, error, data } = useQuery(get_tasks_of_email, {
     variables: {
       param: decodeURIComponent(params.email),
@@ -52,21 +52,31 @@ export default function fetchData({params}) {
       </div>
     );
   }
-
+  const h = data?.findUserEmail?.tasks;
   const f = data?.findUserEmail?.tasks?.filter((e) => e.is_complete == true);
   // await disconnectPrisma();
   return (
     <div className="pt-32 bg-latte text-jet grid grid-cols-2 gap-4 p-8">
       <span className="grid col-span-1 gap-4">
+        <DonutGraph2 props={h} />
+        <span className="flex gap-2 justify-center flex-wrap items-center">
+          <span className="bg-jet text-latte px-4 py-1 text-sm font-bold rounded-sm">
+            COMPLETE
+          </span>
+
+          <span className="bg-steal text-latte px-4 py-1 text-sm font-bold rounded-sm">
+            INCOMPLETE
+          </span>
+        </span>
         <span className="text-3xl font-bold text-coral h-fit w-fit mx-auto">
-          HISTORY OF ALL YOUR TASKS
+          YOUR COMPLETED TASKS
         </span>
         <PastTasks props={f} />
       </span>
       <span className="grid col-span-1">
         <BarGraph1 props={f} />
         <BarGraph2 props={f} />
-        <DonutGraph props={f} />
+        <DonutGraph1 props={f} />
         <span className="flex gap-2 justify-center flex-wrap items-center">
           <span className="bg-jet text-latte px-4 py-1 text-sm font-bold rounded-sm">
             HIGH
@@ -133,7 +143,7 @@ function PastTasks({ props }) {
   );
 }
 
-function DonutGraph({ props }) {
+function DonutGraph1({ props }) {
   let priority_data_points = [0, 0, 0];
   const priority_label = ["High", "Medium", "Low"];
   const priority_color = [];
@@ -175,6 +185,49 @@ function DonutGraph({ props }) {
   return (
     <div className="w-4/5 mx-auto my-4">
       <Doughnut options={priority_options} data={priority_data} />
+    </div>
+  );
+}
+function DonutGraph2({ props }) {
+  let data_points = [0, 0];
+  const label = ["Complete", "Incomplete"];
+  const color = [medium, dark];
+
+  props.map((e) => {
+    if (e.is_complete == true) data_points[0]++;
+    if (e.is_complete == true) data_points[1]++;
+  });
+  const data = {
+    label: label,
+    datasets: [
+      {
+        labels: label,
+        data: data_points,
+        backgroundColor: color,
+      },
+    ],
+  };
+
+  const options = {
+    legend: {
+      display: true,
+    },
+    elements: {
+      bar: {
+        borderWidth: 0,
+      },
+    },
+    responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: "Tasks Complete vs Incomplete",
+      },
+    },
+  };
+  return (
+    <div className="w-4/5 mx-auto mt-2">
+      <Doughnut options={options} data={data} />
     </div>
   );
 }
