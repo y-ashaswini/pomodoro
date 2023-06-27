@@ -606,6 +606,14 @@ export default function Home({ params }) {
                     </span>
                     <span className="flex md:gap-4 gap-2 flex-wrap items-center">
                       <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
+                        POMODOROS USED
+                      </span>
+                      <span className="text-xl">
+                        {storedTask.pomodoros_completed}
+                      </span>
+                    </span>
+                    <span className="flex md:gap-4 gap-2 flex-wrap items-center">
+                      <span className="border-jet border-2 px-4 py-2 w-fit rounded-3xl ">
                         PRIORITY
                       </span>
                       <span className="text-xl">

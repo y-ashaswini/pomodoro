@@ -1,11 +1,11 @@
 "use client";
-// import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 import Image from "next/image";
 
 export default function HeaderPage() {
   const [show, setShow] = useState(false);
-  // const { data: s, _ } = useSession();
+  const { data: s, _ } = useSession();
   return (
     <div className="bg-transparent sm:bg-latte fixed z-50 w-full sm:h-[10vh] text-jet flex justify-between items-start sm:items-center md:px-8 p-4">
       <span className="flex justify-center gap-2 hover:bg-coral hover:bg-opacity-25 ease-in duration-200 px-4 py-2 rounded-full">
