@@ -14,6 +14,8 @@ import {
 
 export default function Home({ params }) {
   const { data: s, _ } = useSession();
+
+  // Setting up a template object for initial task data => to be used for every new task that the user adds
   const initial_data = {
     id: "",
     title: "",
@@ -27,6 +29,7 @@ export default function Home({ params }) {
     by_user_id: "",
   };
 
+  // Setting global useState variables
   const [currUser, setCurrUser] = useState({ id: "", username: "", email: "" });
   const [task, setTask] = useState(initial_data);
   const [stored_data, setStored_data] = useState([]);
@@ -37,24 +40,29 @@ export default function Home({ params }) {
   const [currRunningTask, setCurrRunningTask] = useState([]);
   const [runBreak, setRunBreak] = useState(false);
 
+  // Function for ordering tasks by due date
   function compare_due_date(a, b) {
     if (Date.parse(a.due_date) > Date.parse(b.due_date)) return 1;
     if (Date.parse(a.due_date) > Date.parse(b.due_date)) return -1;
     return 0;
   }
 
+  // Function for ordering tasks by priority
   function compare_priority(a, b) {
     if (a.priority < b.priority) return 1;
     if (a.priority > b.priority) return -1;
     return 0;
   }
 
+  // Function for sorting stored (incomplete) tasks by due date
   function sortStoredDate() {
     console.log("Earlier: ", stored_data);
     const f = stored_data.sort(compare_due_date);
     console.log("Now: ", f);
     setStored_data(f);
   }
+
+  // Function for sorting stored (incomplete) tasks by priority
   function sortStoredPriority() {
     console.log("Earlier: ", stored_data);
     const f = stored_data.sort(compare_priority);
@@ -62,17 +70,19 @@ export default function Home({ params }) {
     setStored_data(f);
   }
 
+  // Function for sorting completed tasks by due date
   function sortHistoryDate() {
     const f = stored_data.sort(compare_due_date);
     setStored_data(f);
   }
+
+  // Function for sorting completed tasks by priority
   function sortHistoryPriority() {
     const f = stored_data.sort(compare_priority);
     setStored_data(f);
   }
 
   const handleRemove = (id) => {
-    // console.log("deleting task with id: ", id);
     deleteUserTaskFunction({
       variables: {
         taskid: parseInt(id),
@@ -80,8 +90,11 @@ export default function Home({ params }) {
     });
   };
 
+  // ------------------------------------------ Timer functions ------------------------------------------
+
+  // Function that runs when the user marks the task as completed
+
   const handleMarkCompleted = () => {
-    // console.log("TASK COMPLETED!");
     updateUserTaskFunction({
       variables: {
         taskid: parseInt(currRunningTask.id),
@@ -95,7 +108,7 @@ export default function Home({ params }) {
     setTimerSelected(false);
   };
 
-  // Timer functions
+  // Function that runs when the timer begins
 
   const handleStartTimer = (thisTask) => {
     setCurrRunningTask(thisTask);
@@ -109,7 +122,6 @@ export default function Home({ params }) {
       api.stop();
       // Check if break was running
       if (runBreak) {
-        // console.log("break was running");
         setRunBreak(false);
         setTimerStartTime(25 * 60 * 1000); // Start task again
         api.start();
@@ -123,7 +135,6 @@ export default function Home({ params }) {
 
         // Check if task is completed
         if (update_pomodoros_required < 1) {
-          // console.log("TASK COMPLETED!");
           updateUserTaskFunction({
             variables: {
               taskid: parseInt(currRunningTask.id),
@@ -152,7 +163,6 @@ export default function Home({ params }) {
             pomodoros_required: update_pomodoros_required,
           });
           setRunBreak(true);
-          // console.log("break 30 mins");
           // Triggering break for 30 minutes
           setTimerStartTime(30 * 60 * 1000);
           // setTimerStartTime(7 * 1000); // testing - break for 7 seconds
@@ -232,6 +242,7 @@ export default function Home({ params }) {
     }
   };
 
+  // Function that handles submitting tasks
   const handleSubmitTask = (curr) => {
     if (
       curr.title &&
@@ -260,7 +271,6 @@ export default function Home({ params }) {
       } catch (e) {
         console.error("error: ", e);
       }
-      // setStored_data([...stored_data, curr]);
       setTask(initial_data);
     }
   };
@@ -268,6 +278,7 @@ export default function Home({ params }) {
   const [fetchErr, setfetchErr] = useState(false);
 
   // --------------- Defining Functions to Interact with the Data ---------------
+  // Fetch functions (from queries imported from lib\queries.js)
 
   const fetchedUserQuery = useQuery(get_tasks_of_email, {
     variables: {
@@ -294,9 +305,6 @@ export default function Home({ params }) {
 
   useEffect(() => {
     const onCompleted = (data) => {
-      // console.log("data: ", data);
-      // console.log("user session: ", s);
-
       // if no data returned, the user isn't stored in database
       if (data.findUserEmail === null) {
         try {

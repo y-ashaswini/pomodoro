@@ -1,6 +1,5 @@
 "use client";
 import { get_tasks_of_email } from "@/lib/queries";
-// import { disconnectPrisma } from "@/server/graphql/schema";
 import { useQuery } from "@apollo/client";
 
 import {
@@ -29,6 +28,8 @@ const light = "#D5D5D5";
 const medium = "#FF8360";
 const dark = "#363636";
 
+// Function for fetching user data through params
+
 export default function fetchData({ params }) {
   const { loading, error, data } = useQuery(get_tasks_of_email, {
     variables: {
@@ -52,9 +53,10 @@ export default function fetchData({ params }) {
       </div>
     );
   }
+
   const h = data?.findUserEmail?.tasks;
   const f = data?.findUserEmail?.tasks?.filter((e) => e.is_complete == true);
-  // await disconnectPrisma();
+
   return (
     <div className="pt-32 bg-latte text-jet grid grid-cols-2 gap-4 p-8">
       <span className="grid col-span-1 gap-4">
@@ -92,6 +94,8 @@ export default function fetchData({ params }) {
     </div>
   );
 }
+
+// Function for rendering the user's completed tasks
 
 function PastTasks({ props }) {
   return (
@@ -149,6 +153,8 @@ function PastTasks({ props }) {
   );
 }
 
+// Function for rendering the user's tasks according to priority -- doughnut graph
+
 function DonutGraph1({ props }) {
   let priority_data_points = [0, 0, 0];
   const priority_label = ["High", "Medium", "Low"];
@@ -194,6 +200,9 @@ function DonutGraph1({ props }) {
     </div>
   );
 }
+
+// Function for rendering the user's tasks according to completion state -- doughnut graph
+
 function DonutGraph2({ props }) {
   let data_points = [0, 0];
   const label = ["Complete", "Incomplete"];
@@ -238,18 +247,19 @@ function DonutGraph2({ props }) {
   );
 }
 
+// Function for rendering the user's tasks according to pomodoros used / remaining -- bar graph
+// For the tasks that took up all the pomodoros they assigned themselves
+
 function BarGraph1({ props }) {
-  // console.log("props: ", props);
   let title = [];
   let pomodoros_used = [];
   props.map((e) => {
     if (e.pomodoros_required <= 0) {
-      // took up all the time
+      // Task took up all the time
       title.push(e.title);
       pomodoros_used.push(e.pomodoros_completed);
     }
   });
-  // console.log(pomodoros_used);
 
   const pomodoros_data = {
     labels: title,
@@ -284,8 +294,10 @@ function BarGraph1({ props }) {
     </div>
   );
 }
+// Function for rendering the user's tasks according to pomodoros used / remaining -- bar graph
+// For the tasks that were finished before time
+
 function BarGraph2({ props }) {
-  // console.log("props: ", props);
   let title = [];
   let pomodoros_used = [];
   props.map((e) => {
@@ -295,7 +307,6 @@ function BarGraph2({ props }) {
       pomodoros_used.push(e.pomodoros_completed);
     }
   });
-  // console.log(pomodoros_used);
   const pomodoros_data = {
     labels: title,
     datasets: [
