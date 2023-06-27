@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { signIn } from "next-auth/react";
 // import { PrismaAdapter } from "@auth/prisma-adapter";
 // import { PrismaClient } from "@prisma/client";
 
@@ -19,7 +18,7 @@ export const authOptions = {
       return { ...token, ...user };
     },
     async session({ session, token, user }) {
-      session.user = token;
+      session?.user = token;
 
       return session;
     },

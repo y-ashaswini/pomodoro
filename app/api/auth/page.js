@@ -31,10 +31,14 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 // }
 
 export default async function SignIn(context) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerSession(
+    context?.req,
+    context?.res,
+    authOptions
+  );
 
   if (session) {
-    return { redirect: { destination: "/profile" } };
+    return { redirect: { destination: "/" } };
   }
 
   const providers = await getProviders();
