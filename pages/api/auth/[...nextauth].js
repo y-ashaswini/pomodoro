@@ -15,7 +15,9 @@ export const authOptions = {
 
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
-      return true;
+      if (account.provider === "google") {
+        return profile.email_verified && profile.email.endsWith("@example.com");
+      }
     },
     async jwt({ token, user }) {
       return { ...token, ...user };
