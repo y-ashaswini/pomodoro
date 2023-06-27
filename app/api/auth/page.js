@@ -1,3 +1,4 @@
+"use client";
 import { getProviders, signIn } from "next-auth/react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
@@ -31,15 +32,22 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 // }
 
 export default async function SignIn(context) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+  if (context && context.req && context.res) {
+    const session = await getServerSession(
+      context.req,
+      context.res,
+      authOptions
+    );
 
-  if (session) {
-    return { redirect: { destination: "/profile" } };
+    if (session) {
+      return { redirect: { destination: "/profile" } };
+    }
+
+    const providers = await getProviders();
+
+    return <DoSomething props={{ providers: providers ?? [] }} />;
   }
-
-  const providers = await getProviders();
-
-  return <DoSomething props={{ providers: providers ?? [] }} />;
+  return <></>;
 }
 
 const DoSomething = ({ providers }) => {
