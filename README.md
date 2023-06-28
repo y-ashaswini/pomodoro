@@ -52,7 +52,7 @@ This is a web application created for users to add, edit, update and delete time
 #### Features:
 
 - Sign up / sign in through a verified Google Account
-- Begin by adding tasks, setting the title, giving a short decription, setting the due date and the required number of pomodoros you'd assign yourself for the task
+- Begin by adding tasks, setting the title, giving a short description, setting the due date and the required number of pomodoros you'd assign yourself for the task
 - Keep adding tasks, set the timer for the task you're sitting for, and let the timer guide you through till the end!
 - Navigate to the profile page to look at your task data analysed and visualised.
 
@@ -64,6 +64,13 @@ This is a web application created for users to add, edit, update and delete time
 
 #### Codebase Structure:
 
-Follows the usual NextJS app-directory-based file structure, but contains a built in ./Server directory with the database Queries and GraphQL, Prisma initialisation files.
+Follows the usual NextJS app-directory-based file structure, but contains a built-in ./Server directory with the database Queries and GraphQL, Prisma initialisation files.
 
 Added the page directory for using NextAuth for authentication.
+
+### Major Issues Faced:
+* Authentication using Auth0 | [link]() | I spent over two days figuring out what was wrong until I realised that there are breaking changes in the structure of the latest version (13) of Next.js, for which Auth0 support is yet to be rolled out. It has something to do with the pages/ and app/ directories. Even with NextAuth, I faced the same issue, but after long hours of trying the current setup seemed to work. So I implemented NextAuth (Google Authentication).
+  
+* Authentication using NextAuth | As given [here](https://github.com/nextauthjs/next-auth/issues/1542), and as I'd (again) spent a few hours to figure, the redirect URL seems to be hardcoded into the component. Solutions were either to create a whole new custom page or pass in cookies or modify the functions involved. After tinkering around a bit, I implemented the custom pages. But TailwindCSS doesn't apply on those pages for some reason. Perhaps something to do with routing and server-side rendering.
+
+  Regardless, enjoy the app!
