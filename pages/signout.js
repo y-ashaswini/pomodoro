@@ -11,7 +11,7 @@ export default function signin({ providers }) {
             <button
               onClick={() =>
                 signOut(provider.id, {
-                  redirect_uri: "/",
+                  redirect_uri: "https://taskpomodoros.vercel.app/",
                 })
               }
             >
