@@ -20,14 +20,11 @@ export const authOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      console.log("url: ", url);
-      console.log("baseUrl: ", baseUrl);
-
       // Allows relative callback URLs
-      if (url.startsWith("/api/auth/signin")) return `${baseUrl}${url}`;
+      // if (url.startsWith("/api/auth/signin")) return `${baseUrl}${url}`;
       // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
+      // else if (new URL(url).origin === baseUrl) return url;
+      return url;
     },
   },
 
