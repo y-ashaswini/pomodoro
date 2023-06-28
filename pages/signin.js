@@ -10,7 +10,7 @@ export default function signin({ providers }) {
           <div key={provider.name}>
             <button
               onClick={() =>
-                signIn("google", {
+                signIn(provider.id, {
                   callbackUrl: `https://taskpomodoros.vercel.app/api/auth/callback/google`,
                 })
               }
