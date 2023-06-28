@@ -8,6 +8,7 @@ const nextConfig = {
 
     return config;
   },
+  env: { NEXTAUTH_URL: "https://taskpomodoros.vercel.app/" },
 };
 
 module.exports = nextConfig;
