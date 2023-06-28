@@ -25,6 +25,10 @@ export const authOptions = {
     strategy: "jwt",
   },
   // adapter: PrismaAdapter(prisma),
+  pages: {
+    signIn: "/signin",
+    signOut: "/signout",
+  },
 };
 
 export default NextAuth(authOptions);
