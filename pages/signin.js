@@ -8,7 +8,17 @@ export default function signin({ providers }) {
       {Object.values(providers).map((provider) => {
         return (
           <div key={provider.name}>
-            <button classN onClick={() => signIn(provider.id)}>
+            <button
+              classN
+              onClick={() =>
+                signIn(provider.id, undefined, {
+                  redirect_uri: `https://taskpomodoros.vercel.app/api/auth/callback/google`,
+                })
+              }
+              //   onClick={() =>
+              //     signIn(provider.id)
+              //   }
+            >
               Sign in / Sign up with {provider.name}
             </button>
           </div>
