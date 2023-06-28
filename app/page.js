@@ -23,10 +23,10 @@ export default function LoginPage() {
         </>
       ) : (
         <a
-          // href="/api/auth/signin"
-          href={`https://taskpomodoros.vercel.app/signin?callbackUrl=${encodeURIComponent(
-            "https://taskpomodoros.vercel.app"
-          )}`}
+          href="/api/auth/signin"
+          // href={`https://taskpomodoros.vercel.app/signin?callbackUrl=${encodeURIComponent(
+          //   "https://taskpomodoros.vercel.app"
+          // )}`}
           className="border-2 font-bold border-jet duration-200 ease-in w-fit px-2 py-1 rounded-sm hover:bg-jet hover:text-latte cursor-pointer"
         >
           SIGNIN

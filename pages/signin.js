@@ -10,17 +10,8 @@ export default function signin({ providers }) {
           <div key={provider.name}>
             <button
               onClick={() =>
-                signIn(provider.id, undefined, {
-                  callbackUrl:
-                    "https://taskpomodoros.vercel.app/api/auth/callback/google",
-                })
+                signIn(provider.id)
               }
-              //   onClick={() =>
-              //     signIn(provider.id)
-              //   }
-              // {
-              //     redirect_uri: `https://taskpomodoros.vercel.app/api/auth/callback/google`,
-              //   }
             >
               Get Authorized with {provider.name}
             </button>
