@@ -9,9 +9,8 @@ export default function signin({ providers }) {
         return (
           <div key={provider.name}>
             <button
-              classN
               onClick={() =>
-                signIn(provider.id, undefined, {
+                signIn({
                   redirect_uri: `https://taskpomodoros.vercel.app/api/auth/callback/google`,
                 })
               }

@@ -8,7 +8,13 @@ export default function signin({ providers }) {
       {Object.values(providers).map((provider) => {
         return (
           <div key={provider.name}>
-            <button classN onClick={() => signOut(provider.id)}>
+            <button
+              onClick={() =>
+                signOut(provider.id, {
+                  redirect_uri: "/",
+                })
+              }
+            >
               Sure you want to sign out?
             </button>
           </div>
