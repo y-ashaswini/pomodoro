@@ -8,13 +8,7 @@ export default function signin({ providers }) {
       {Object.values(providers).map((provider) => {
         return (
           <div key={provider.name}>
-            <button
-              onClick={() =>
-                signOut(provider.id, undefined, {
-                  redirect_url: "https://taskpomodoros.vercel.app/",
-                })
-              }
-            >
+            <button onClick={() => signOut(provider.id)}>
               Sure you want to sign out?
             </button>
           </div>
